@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: document_management_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: qltl_luat_dan_su
+      MYSQL_USER: dev_user
+      MYSQL_PASSWORD: dev_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Mount thư mục chứa các file SQL (01_schema.sql, 02_data.sql...) để tự động chạy theo thứ tự alphabet
+      - ./database:/docker-entrypoint-initdb.d:ro
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: document_management_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy # Đợi MySQL khỏe mạnh hoàn toàn mới chạy backend
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/qltl_luat_dan_su?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=dev_user
+      - SPRING_DATASOURCE_PASSWORD=dev_password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=validate # Đã có script init nên cấu hình validate để check khớp cấu hình
+    volumes:
+      # Chia sẻ chung thư mục chứa tài liệu văn bản đã crawl giữa máy host và backend
+      - ./documents:/app/documents
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production # Thay bằng development nếu muốn dùng cho môi trường dev
+    container_name: document_management_frontend
+    restart: always
+    ports:
+      - "80:80" # Port 80 cho môi trường Prod (Nginx). Nếu là dev, đổi thành "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:

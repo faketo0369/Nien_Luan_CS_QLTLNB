@@ -1,0 +1,14 @@
+# Frontend rác
+node_modules/
+dist/
+.local
+
+# Backend rác
+target/
+*.class
+.mvn/
+
+# IDE rác
+.vscode/
+.idea/
+*.log
