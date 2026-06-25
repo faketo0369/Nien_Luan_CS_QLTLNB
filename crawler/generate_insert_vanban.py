@@ -6,9 +6,9 @@ from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-DEFAULT_CSV = BASE_DIR / "data-prep" / "vanban_phapluat.csv"
+DEFAULT_CSV = BASE_DIR / "crawler" / "vanban_phapluat.csv"
 FALLBACK_CSV = BASE_DIR / "vanban_phapluat.csv"
-OUTPUT_SQL = BASE_DIR / "insert_vanban.sql"
+OUTPUT_SQL = BASE_DIR / "database" / "03_insert_vanban.sql"
 
 
 def sql_string(value):

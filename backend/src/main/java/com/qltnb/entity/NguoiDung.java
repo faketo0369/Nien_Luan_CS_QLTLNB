@@ -53,9 +53,52 @@ public class NguoiDung {
     @OneToMany(mappedBy = "nguoiDuyet", fetch = FetchType.LAZY)
     private List<DuyetTaiLieu> danhSachDuyetTaiLieu;
 
-    @OneToMany(mappedBy = "nguoiDung", fetch = FetchType.LAZY)
-    private List<LichSuHoatDong> danhSachLichSu;
 
-    @OneToMany(mappedBy = "nguoiDung", fetch = FetchType.LAZY)
+
+    @OneToMany(mappedBy = "nguoiNhan", fetch = FetchType.LAZY)
     private List<ThongBao> danhSachThongBao;
+
+    public Long getId() {
+        return ND_id != null ? ND_id.longValue() : null;
+    }
+
+    public String getTaiKhoan() {
+        return this.ND_taiKhoan;
+    }
+
+    public void setTaiKhoan(String taiKhoan) {
+        this.ND_taiKhoan = taiKhoan;
+    }
+
+    public String getMatKhau() {
+        return this.ND_matKhau;
+    }
+
+    public void setMatKhau(String matKhau) {
+        this.ND_matKhau = matKhau;
+    }
+
+    public String getHoTen() {
+        return this.ND_hoTen;
+    }
+
+    public Integer getSoLanSai() {
+        return this.ND_soLanSai;
+    }
+
+    public void setSoLanSai(Integer soLanSai) {
+        this.ND_soLanSai = soLanSai;
+    }
+
+    public String getTrangThai() {
+        return (ND_trangThaiTK == null || ND_trangThaiTK) ? "HOAT_DONG" : "KHOA";
+    }
+
+    public void setTrangThai(String trangThai) {
+        if ("KHOA".equalsIgnoreCase(trangThai)) {
+            this.ND_trangThaiTK = false;
+        } else {
+            this.ND_trangThaiTK = true;
+        }
+    }
 }

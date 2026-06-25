@@ -1,33 +1,33 @@
 package com.qltnb.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "THONG_BAO")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Table(name = "thong_bao_moi")
+@Data
 public class ThongBao {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer TB_id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ND_id")
-    private NguoiDung nguoiDung;
+    @JoinColumn(name = "nguoi_nhan_id", nullable = false)
+    private NguoiDung nguoiNhan;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "TL_id")
-    private TaiLieu taiLieu;
+    @Column(name = "loai", nullable = false)
+    private String loai; // YEU_CAU_DUYET, DA_DUYET, TU_CHOI, DUOC_CAP_QUYEN, HET_HAN_QUYEN
 
-    @Column(name = "TB_tieuDe", columnDefinition = "TEXT")
-    private String TB_tieuDe;
+    @Column(name = "tieu_de", nullable = false)
+    private String tieuDe;
 
-    @Column(name = "TB_noiDung", columnDefinition = "TEXT")
-    private String TB_noiDung;
+    @Column(name = "noi_dung", nullable = false, length = 1000)
+    private String noiDung;
 
-    @Column(name = "TB_trangThaiDoc")
-    private Boolean TB_trangThaiDoc;
+    @Column(name = "ngay_tao", nullable = false)
+    private LocalDateTime ngayTao;
+
+    @Column(name = "da_doc", nullable = false)
+    private Boolean daDoc = false;
 }

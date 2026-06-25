@@ -1,97 +1,79 @@
 package com.qltnb.controller;
 
-import com.qltnb.entity.TaiLieu;
-import com.qltnb.repository.TaiLieuRepository;
-import com.qltnb.service.DocumentScanService;
-import com.qltnb.service.DocumentImportService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
-import org.springframework.http.ResponseEntity;
+import com.qltnb.dto.*;
+import com.qltnb.service.DocumentService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/documents")
+@RequiredArgsConstructor
 @CrossOrigin(origins = "*") // Cho phép kết nối CORS từ frontend Vue 3
 public class DocumentController {
 
-    @Autowired
-    private DocumentScanService documentScanService;
+    private final DocumentService documentService;
 
-    @Autowired
-    private DocumentImportService documentImportService;
-
-    @Autowired
-    private TaiLieuRepository taiLieuRepository;
-
-    @PostMapping("/scan")
-    public ResponseEntity<Map<String, Object>> scanAndImportDocuments() {
-        // Bước 1: Quét toàn bộ thư mục và tách nội dung text
-        List<DocumentScanService.ScanResult> scanResults = documentScanService.scanDocuments();
-        
-        // Bước 2: Đối chiếu lưu DB và tạo báo cáo tổng hợp
-        Map<String, Object> responseReport = documentImportService.importScannedData(scanResults);
-        
-        return ResponseEntity.ok(responseReport);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<DocumentResponse>> create(
+            @ModelAttribute DocumentRequest request,
+            @RequestParam("file") MultipartFile file) {
+        DocumentResponse data = documentService.createDocument(request, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(data));
     }
 
-    @GetMapping("/tai-lieu")
-    public ResponseEntity<Map<String, Object>> getDocumentList(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Integer danhMuc,
-            @RequestParam(required = false) String tuKhoa) {
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<DocumentResponse>>> getAll(DocumentFilterRequest filter) {
+        Page<DocumentResponse> data = documentService.getDocuments(filter);
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
 
-        // 1. Phân trang, sắp xếp được xử lý cứng trong JPQL để tránh lỗi dấu gạch dưới (_) trong Spring Data Sort
-        Pageable pageable = PageRequest.of(page, size);
-        Page<TaiLieu> pageResult;
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<DocumentResponse>> getById(@PathVariable Long id) {
+        DocumentResponse data = documentService.getDetail(id);
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
 
-        // 2. Filter động theo từ khóa tìm kiếm hoặc danh mục
-        if (danhMuc != null && tuKhoa != null && !tuKhoa.trim().isEmpty()) {
-            pageResult = taiLieuRepository.findByDanhMucIdAndTlTenContaining(danhMuc, tuKhoa, pageable);
-        } else if (danhMuc != null) {
-            pageResult = taiLieuRepository.findByDanhMucId(danhMuc, pageable);
-        } else if (tuKhoa != null && !tuKhoa.trim().isEmpty()) {
-            pageResult = taiLieuRepository.findByTlTenContaining(tuKhoa, pageable);
-        } else {
-            pageResult = taiLieuRepository.findAllOrderByTL_ngayTaoDesc(pageable);
-        }
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<DocumentResponse>> update(
+            @PathVariable Long id, 
+            @RequestBody DocumentRequest request) {
+        DocumentResponse data = documentService.updateDocument(id, request);
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
 
-        // 3. Map DTO nhằm ẨN cột đường dẫn máy chủ vật lý (TL_duongDan) bảo mật nội bộ
-        List<Map<String, Object>> customContent = pageResult.getContent().stream().map(doc -> {
-            Map<String, Object> item = new HashMap<>();
-            item.put("id", doc.getTL_id());
-            item.put("ten", doc.getTL_ten());
-            item.put("soHieu", doc.getTL_soHieu());
-            item.put("dinhDang", doc.getTL_dinhDang());
-            item.put("dungLuong", doc.getTL_dungLuong());
-            item.put("ngayTao", doc.getTL_ngayTao());
-            
-            // Tính trạng thái từ lịch sử duyệt
-            String status = "nhap";
-            if (doc.getDanhSachDuyet() != null && !doc.getDanhSachDuyet().isEmpty()) {
-                status = doc.getDanhSachDuyet().get(doc.getDanhSachDuyet().size() - 1).getDTL_trangThai().name().toLowerCase();
-            }
-            item.put("trangThai", status);
-            
-            // Lấy tên quan hệ từ liên kết bảng để hiển thị nhãn đẹp trên giao diện Vue 3
-            item.put("danhMuc", doc.getDanhMuc() != null ? doc.getDanhMuc().getDM_ten() : "Chưa phân loại");
-            item.put("loaiTaiLieu", doc.getLoaiTaiLieuPhapLy() != null ? doc.getLoaiTaiLieuPhapLy().getLTLPL_ten() : "Bộ luật");
-            
-            return item;
-        }).collect(Collectors.toList());
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<String>> delete(@PathVariable Long id) {
+        documentService.deleteDocument(id);
+        return ResponseEntity.ok(ApiResponse.success("Xóa mềm và tệp tin liên quan thành công."));
+    }
 
-        // 4. Đóng gói chuẩn cấu hình phân trang Pageable
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", customContent);
-        response.put("totalElements", pageResult.getTotalElements());
-        response.put("totalPages", pageResult.getTotalPages());
-        response.put("currentPage", pageResult.getNumber());
+    @PostMapping(value = "/{id}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<DocumentResponse>> changeFile(
+            @PathVariable Long id,
+            @RequestPart("file") MultipartFile file) {
+        DocumentResponse data = documentService.replaceFile(id, file);
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
 
-        return ResponseEntity.ok(response);
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> download(@PathVariable Long id) {
+        byte[] fileData = documentService.downloadFile(id);
+        DocumentResponse doc = documentService.getDetail(id);
+        
+        String cleanName = doc.getTen().replaceAll("[^a-zA-Z0-9]", "_") + "." + doc.getDinhDang();
+        
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + cleanName + "\"")
+                .body(fileData);
+    }
+
+    @PostMapping("/{id}/submit")
+    public ResponseEntity<ApiResponse<String>> submit(@PathVariable Long id) {
+        documentService.submitForApproval(id);
+        return ResponseEntity.ok(ApiResponse.success("Tài liệu đã được chuyển sang trạng thái chờ duyệt."));
     }
 }

@@ -20,7 +20,7 @@ public class KhachHang {
     private String KH_ten;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "KH_loai")
+    @Column(name = "KH_loai", columnDefinition = "TEXT")
     private LoaiKhachHang KH_loai;
 
     @Column(name = "KH_CCCD_MST", length = 50)

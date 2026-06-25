@@ -20,13 +20,16 @@ export const useAuthStore = defineStore('auth', {
         vaiTro: userData.vaiTro,
         boPhan: userData.boPhan
       };
-      // Lưu vĩnh viễn vào trình duyệt để giữ trạng thái đăng nhập
+      // Lưu thông tin user vào trình duyệt để giữ trạng thái đăng nhập khi F5
       localStorage.setItem('user', JSON.stringify(this.user));
+      // Token đã được lưu tự động bởi hàm dangNhap() trong api/auth.js
     },
     
     logout() {
       this.user = null;
+      // Xóa sạch cả user lẫn token khỏi trình duyệt khi đăng xuất
       localStorage.removeItem('user');
+      localStorage.removeItem('token');
     }
   }
 });

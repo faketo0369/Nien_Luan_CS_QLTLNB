@@ -34,4 +34,13 @@ public class PhienBanTaiLieu {
 
     @Column(name = "PBTL_ghiChu", columnDefinition = "TEXT")
     private String PBTL_ghiChu;
+
+    @Column(name = "PBTL_duongDan", columnDefinition = "TEXT")
+    private String PBTL_duongDan;
+
+    @Column(name = "PBTL_kichCo")
+    private Long PBTL_kichCo;
+
+    @Column(name = "PBTL_dinhDang", length = 50)
+    private String PBTL_dinhDang;
 }

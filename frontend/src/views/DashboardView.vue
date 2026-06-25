@@ -50,8 +50,8 @@
           <tr v-for="item in docs" :key="item.id" style="border-bottom: 1px solid #dee2e6;">
             <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: 500; color: #0056b3;">{{ item.ten }}</td>
             <td style="padding: 12px; border: 1px solid #dee2e6;">{{ item.soHieu || '---' }}</td>
-            <td style="padding: 12px; border: 1px solid #dee2e6;">{{ item.danhMuc }}</td>
-            <td style="padding: 12px; border: 1px solid #dee2e6;">{{ item.loaiTaiLieu }}</td>
+            <td style="padding: 12px; border: 1px solid #dee2e6;">{{ item.danhMuc?.ten || 'Chưa phân loại' }}</td>
+            <td style="padding: 12px; border: 1px solid #dee2e6;">{{ item.loaiTaiLieu?.ten || 'Bộ luật' }}</td>
             <td style="padding: 12px; border: 1px solid #dee2e6;">{{ item.ngayTao ? item.ngayTao.substring(0,10) : '---' }}</td>
             <td style="padding: 12px; border: 1px solid #dee2e6;">
               <span :style="getBadgeStyle(item.trangThai)">

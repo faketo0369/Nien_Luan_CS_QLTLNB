@@ -120,6 +120,9 @@ CREATE TABLE PHIEN_BAN_TAI_LIEU (
   PBTL_nguoiUpdate TEXT,
   PBTL_timeUpdate DATETIME,
   PBTL_ghiChu TEXT,
+  PBTL_duongDan TEXT,
+  PBTL_kichCo BIGINT,
+  PBTL_dinhDang VARCHAR(50),
   KEY idx_pbtl_tl (TL_id),
   KEY idx_pbtl_nd (ND_update_id),
   CONSTRAINT fk_pbtl_tl FOREIGN KEY (TL_id) REFERENCES TAI_LIEU(TL_id),
@@ -176,3 +179,47 @@ CREATE TABLE THONG_BAO (
   CONSTRAINT fk_tb_nd FOREIGN KEY (ND_id) REFERENCES TAI_KHOAN_NGUOI_DUNG(ND_id),
   CONSTRAINT fk_tb_tl FOREIGN KEY (TL_id) REFERENCES TAI_LIEU(TL_id)
 ) COMMENT='Thong bao cho nguoi dung';
+
+CREATE TABLE tai_lieu_quyen_moi (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  tai_lieu_id INT NOT NULL,
+  nguoi_dung_id INT,
+  bo_phan_id INT,
+  loai_quyen VARCHAR(50) NOT NULL,
+  ngay_het_han DATE,
+  CONSTRAINT fk_tlq_tl FOREIGN KEY (tai_lieu_id) REFERENCES TAI_LIEU(TL_id),
+  CONSTRAINT fk_tlq_nd FOREIGN KEY (nguoi_dung_id) REFERENCES TAI_KHOAN_NGUOI_DUNG(ND_id),
+  CONSTRAINT fk_tlq_bp FOREIGN KEY (bo_phan_id) REFERENCES BO_PHAN(BP_id)
+) COMMENT='Quyen truy cap tai lieu moi';
+
+CREATE TABLE duyet_tai_lieu_moi (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  tai_lieu_id INT NOT NULL,
+  nguoi_duyet_id INT,
+  hanh_dong VARCHAR(100) NOT NULL,
+  ghi_chu VARCHAR(500),
+  time_approve DATETIME NOT NULL,
+  CONSTRAINT fk_dtl_new_tl FOREIGN KEY (tai_lieu_id) REFERENCES TAI_LIEU(TL_id),
+  CONSTRAINT fk_dtl_new_nd FOREIGN KEY (nguoi_duyet_id) REFERENCES TAI_KHOAN_NGUOI_DUNG(ND_id)
+) COMMENT='Duyet tai lieu moi';
+
+CREATE TABLE thong_bao_moi (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nguoi_nhan_id INT NOT NULL,
+  loai VARCHAR(50) NOT NULL,
+  tieu_de VARCHAR(255) NOT NULL,
+  noi_dung VARCHAR(1000) NOT NULL,
+  ngay_tao DATETIME NOT NULL,
+  da_doc BOOLEAN NOT NULL DEFAULT FALSE,
+  CONSTRAINT fk_tb_new_nd FOREIGN KEY (nguoi_nhan_id) REFERENCES TAI_KHOAN_NGUOI_DUNG(ND_id)
+) COMMENT='Thong bao moi';
+
+CREATE TABLE lich_su_hoat_dong_moi (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nguoi_dung_id BIGINT,
+  tai_lieu_id BIGINT,
+  loai_hanh_dong VARCHAR(100) NOT NULL,
+  mo_ta VARCHAR(1000),
+  time_log DATETIME NOT NULL
+) COMMENT='Lich su hoat dong kieu moi';
+

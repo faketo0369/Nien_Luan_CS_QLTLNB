@@ -55,8 +55,8 @@
           <p class="quick-login-title">⚡ Đăng nhập nhanh (Test):</p>
           <div class="quick-login-buttons">
             <button class="quick-btn admin-color" @click="fillAndSubmit('admin', 'admin')">Admin</button>
-            <button class="quick-btn manager-color" @click="fillAndSubmit('truongphong.dansu', 'manager')">Trưởng phòng</button>
-            <button class="quick-btn staff-color" @click="fillAndSubmit('nhanvien.dansu', 'staff')">Nhân viên</button>
+            <button class="quick-btn manager-color" @click="fillAndSubmit('truongphong.dansu', 'truongphong.dansu')">Trưởng phòng</button>
+            <button class="quick-btn staff-color" @click="fillAndSubmit('nhanvien.dansu', 'nhanvien.dansu')">Nhân viên</button>
           </div>
         </div>
       </div>
