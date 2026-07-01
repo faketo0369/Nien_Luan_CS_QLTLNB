@@ -4,6 +4,8 @@ import com.qltnb.dto.*;
 import com.qltnb.entity.*;
 import com.qltnb.repository.*;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
@@ -122,6 +124,89 @@ public class DocumentService {
             if (filter.getVuViecId() != null) {
                 predicates.add(criteriaBuilder.equal(root.get("vuViec").get("VV_id"), filter.getVuViecId().intValue()));
             }
+            if (filter.getTrangThai() != null && !filter.getTrangThai().isBlank()) {
+                String targetStatus = filter.getTrangThai().trim().toLowerCase();
+                
+                String targetAction = null;
+                if ("cho_duyet".equals(targetStatus)) {
+                    targetAction = "GUI_DUYET";
+                } else if ("da_duyet".equals(targetStatus)) {
+                    targetAction = "PHE_DUYET";
+                } else if ("tu_choi".equals(targetStatus)) {
+                    targetAction = "TU_CHOI";
+                }
+                
+                String oldStatusEnumName = targetStatus.toUpperCase();
+                TrangThaiTaiLieu targetEnum = null;
+                try {
+                    targetEnum = TrangThaiTaiLieu.valueOf(oldStatusEnumName);
+                } catch (IllegalArgumentException e) {
+                    // Ignore
+                }
+
+                List<Predicate> statusPredicates = new ArrayList<>();
+
+                if ("nhap".equals(targetStatus)) {
+                    Subquery<Long> subNew = query.subquery(Long.class);
+                    Root<DocumentApproval> subRootNew = subNew.from(DocumentApproval.class);
+                    subNew.select(criteriaBuilder.count(subRootNew));
+                    subNew.where(criteriaBuilder.equal(subRootNew.get("document"), root));
+
+                    Subquery<Long> subOld = query.subquery(Long.class);
+                    Root<DuyetTaiLieu> subRootOld = subOld.from(DuyetTaiLieu.class);
+                    subOld.select(criteriaBuilder.count(subRootOld));
+                    subOld.where(criteriaBuilder.equal(subRootOld.get("taiLieu"), root));
+
+                    statusPredicates.add(criteriaBuilder.and(
+                        criteriaBuilder.equal(subNew, 0L),
+                        criteriaBuilder.equal(subOld, 0L)
+                    ));
+                    
+                    if (targetEnum != null) {
+                        Subquery<Long> subOldMaxId = query.subquery(Long.class);
+                        Root<DuyetTaiLieu> subRootOldMax = subOldMaxId.from(DuyetTaiLieu.class);
+                        subOldMaxId.select(criteriaBuilder.max(subRootOldMax.get("DTL_id")));
+                        subOldMaxId.where(criteriaBuilder.equal(subRootOldMax.get("taiLieu"), root));
+
+                        Subquery<TrangThaiTaiLieu> subOldStatus = query.subquery(TrangThaiTaiLieu.class);
+                        Root<DuyetTaiLieu> subRootOldStatus = subOldStatus.from(DuyetTaiLieu.class);
+                        subOldStatus.select(subRootOldStatus.get("DTL_trangThai"));
+                        subOldStatus.where(criteriaBuilder.equal(subRootOldStatus.get("DTL_id"), subOldMaxId));
+
+                        statusPredicates.add(criteriaBuilder.equal(subOldStatus, targetEnum));
+                    }
+                } else {
+                    if (targetAction != null) {
+                        Subquery<Long> subNewMaxId = query.subquery(Long.class);
+                        Root<DocumentApproval> subRootNewMax = subNewMaxId.from(DocumentApproval.class);
+                        subNewMaxId.select(criteriaBuilder.max(subRootNewMax.get("id")));
+                        subNewMaxId.where(criteriaBuilder.equal(subRootNewMax.get("document"), root));
+
+                        Subquery<String> subNewAction = query.subquery(String.class);
+                        Root<DocumentApproval> subRootNewAction = subNewAction.from(DocumentApproval.class);
+                        subNewAction.select(subRootNewAction.get("hanhDong"));
+                        subNewAction.where(criteriaBuilder.equal(subRootNewAction.get("id"), subNewMaxId));
+
+                        statusPredicates.add(criteriaBuilder.equal(subNewAction, targetAction));
+                    }
+
+                    if (targetEnum != null) {
+                        Subquery<Long> subOldMaxId = query.subquery(Long.class);
+                        Root<DuyetTaiLieu> subRootOldMax = subOldMaxId.from(DuyetTaiLieu.class);
+                        subOldMaxId.select(criteriaBuilder.max(subRootOldMax.get("DTL_id")));
+                        subOldMaxId.where(criteriaBuilder.equal(subRootOldMax.get("taiLieu"), root));
+
+                        Subquery<TrangThaiTaiLieu> subOldStatus = query.subquery(TrangThaiTaiLieu.class);
+                        Root<DuyetTaiLieu> subRootOldStatus = subOldStatus.from(DuyetTaiLieu.class);
+                        subOldStatus.select(subRootOldStatus.get("DTL_trangThai"));
+                        subOldStatus.where(criteriaBuilder.equal(subRootOldStatus.get("DTL_id"), subOldMaxId));
+
+                        statusPredicates.add(criteriaBuilder.equal(subOldStatus, targetEnum));
+                    }
+                }
+
+                predicates.add(criteriaBuilder.or(statusPredicates.toArray(new Predicate[0])));
+            }
 
             // Áp dụng Order By trực tiếp trên CriteriaQuery để bỏ qua cơ chế phân tách thuộc tính (PropertyPath) có dấu gạch dưới (_) của Spring Data
             Class<?> resultType = query.getResultType();
@@ -229,9 +314,18 @@ public class DocumentService {
         res.setNgayCapNhat(entity.getTL_ngayTao()); // Fallback bằng ngày tạo
         res.setBaoMat("MAT".equalsIgnoreCase(entity.getTL_baoMat()));
         
-        // Tính trạng thái duyệt tài liệu từ lịch sử
+        // Tính trạng thái duyệt tài liệu từ lịch sử mới hoặc cũ
         String status = "nhap";
-        if (entity.getDanhSachDuyet() != null && !entity.getDanhSachDuyet().isEmpty()) {
+        if (entity.getApprovals() != null && !entity.getApprovals().isEmpty()) {
+            String act = entity.getApprovals().get(entity.getApprovals().size() - 1).getHanhDong();
+            if ("GUI_DUYET".equalsIgnoreCase(act)) {
+                status = "cho_duyet";
+            } else if ("PHE_DUYET".equalsIgnoreCase(act)) {
+                status = "da_duyet";
+            } else if ("TU_CHOI".equalsIgnoreCase(act)) {
+                status = "tu_choi";
+            }
+        } else if (entity.getDanhSachDuyet() != null && !entity.getDanhSachDuyet().isEmpty()) {
             status = entity.getDanhSachDuyet().get(entity.getDanhSachDuyet().size() - 1).getDTL_trangThai().name().toLowerCase();
         }
         res.setTrangThai(status);

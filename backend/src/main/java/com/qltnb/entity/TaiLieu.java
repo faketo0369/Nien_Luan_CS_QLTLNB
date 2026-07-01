@@ -74,4 +74,7 @@ public class TaiLieu {
 
     @OneToMany(mappedBy = "taiLieu", fetch = FetchType.LAZY)
     private List<QuyenTruyCap> danhSachQuyenTruyCap;
+
+    @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
+    private List<DocumentApproval> approvals;
 }

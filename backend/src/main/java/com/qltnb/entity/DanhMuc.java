@@ -1,5 +1,6 @@
 package com.qltnb.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -19,5 +20,6 @@ public class DanhMuc {
     private String DM_ten;
 
     @OneToMany(mappedBy = "danhMuc", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<TaiLieu> danhSachTaiLieu;
 }
