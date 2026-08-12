@@ -11,6 +11,7 @@ export const documentApi = {
   }),
   delete: (id) => api.delete(`/documents/${id}`),
   download: (id) => api.get(`/documents/${id}/download`, { responseType: 'blob' }),
+  preview: (id) => api.get(`/documents/${id}/preview`, { responseType: 'blob' }),
 
   // Quy trình phê duyệt tài liệu
   submit: (id) => api.post(`/documents/${id}/approval/submit`),

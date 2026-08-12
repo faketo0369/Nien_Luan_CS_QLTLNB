@@ -5,6 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class QltnbApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(QltnbApplication.class, args);
     }

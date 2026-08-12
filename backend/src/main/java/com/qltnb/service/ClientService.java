@@ -23,6 +23,7 @@ public class ClientService {
 
     private final KhachHangRepository khachHangRepository;
     private final VuViecRepository vuViecRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public ClientResponse createClient(ClientRequest request) {
@@ -30,6 +31,7 @@ public class ClientService {
         mapDtoToEntity(request, kh);
         kh.setKH_ngayTao(LocalDateTime.now());
         KhachHang saved = khachHangRepository.save(kh);
+        notificationService.createNotificationForAll("KHACH_HANG", "Khách hàng mới", "Hồ sơ khách hàng '" + saved.getKH_ten() + "' đã được khởi tạo.");
         return mapEntityToDto(saved);
     }
 
@@ -81,7 +83,9 @@ public class ClientService {
         KhachHang kh = khachHangRepository.findById(id.intValue())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy dữ liệu khách hàng cần sửa."));
         mapDtoToEntity(request, kh);
-        return mapEntityToDto(khachHangRepository.save(kh));
+        KhachHang saved = khachHangRepository.save(kh);
+        notificationService.createNotificationForAll("KHACH_HANG", "Cập nhật khách hàng", "Hồ sơ khách hàng '" + saved.getKH_ten() + "' đã được cập nhật thông tin.");
+        return mapEntityToDto(saved);
     }
 
     @Transactional
@@ -90,6 +94,7 @@ public class ClientService {
                 .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại."));
         // Thực hiện xóa vật lý vì bảng KHACH_HANG không hỗ trợ soft delete (không có cột KH_daXoa)
         khachHangRepository.delete(kh);
+        notificationService.createNotificationForAll("KHACH_HANG", "Xóa khách hàng", "Hồ sơ khách hàng '" + kh.getKH_ten() + "' đã bị gỡ bỏ khỏi hệ thống.");
     }
 
     private void mapDtoToEntity(ClientRequest dto, KhachHang entity) {

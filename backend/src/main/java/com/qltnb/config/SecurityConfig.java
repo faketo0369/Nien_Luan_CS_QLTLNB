@@ -56,8 +56,8 @@ public class SecurityConfig {
                 // 4. Hộp đen kiểm toán & Nhật ký - Chỉ cấp quản lý được xem
                 .requestMatchers("/api/activity-logs/**").hasAnyAuthority("TRUONG_PHONG", "ADMIN")
 
-                // 5. Quản trị danh mục nền hệ thống - Chỉ ADMIN có quyền truy cập tối cao
-                .requestMatchers("/api/users/**").hasAuthority("ADMIN")
+                // 5. Quản trị danh mục nền hệ thống - Phân quyền quản lý tài liệu và người dùng
+                .requestMatchers("/api/users", "/api/users/**").hasAnyAuthority("ADMIN", "TRUONG_PHONG")
                 .requestMatchers("/api/departments/**").hasAuthority("ADMIN")
                 .requestMatchers("/api/categories/**").hasAuthority("ADMIN")
 

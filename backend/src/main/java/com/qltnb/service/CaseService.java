@@ -27,12 +27,14 @@ public class CaseService {
     private final VuViecRepository vuViecRepository;
     private final TaiLieuRepository taiLieuRepository;
     private final DocumentService documentService;
+    private final NotificationService notificationService;
 
     @Transactional
     public CaseResponse createCase(CaseRequest request) {
         VuViec vv = new VuViec();
         mapDtoToEntity(request, vv);
         VuViec saved = vuViecRepository.save(vv);
+        notificationService.createNotificationForAll("VU_VIEC", "Vụ việc mới", "Vụ việc '" + saved.getVV_ten() + "' đã được tạo mới.");
         return mapEntityToDto(saved);
     }
 
@@ -74,7 +76,9 @@ public class CaseService {
         VuViec vv = vuViecRepository.findById(id.intValue())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy vụ việc cần chỉnh sửa thông tin."));
         mapDtoToEntity(request, vv);
-        return mapEntityToDto(vuViecRepository.save(vv));
+        VuViec saved = vuViecRepository.save(vv);
+        notificationService.createNotificationForAll("VU_VIEC", "Cập nhật vụ việc", "Vụ việc '" + saved.getVV_ten() + "' đã được chỉnh sửa thông tin.");
+        return mapEntityToDto(saved);
     }
 
     @Transactional
@@ -83,6 +87,7 @@ public class CaseService {
                 .orElseThrow(() -> new RuntimeException("Vụ việc không tồn tại trên hệ thống."));
         // Thực hiện xóa vật lý vì bảng VU_VIEC không hỗ trợ soft delete (không có cột VV_daXoa)
         vuViecRepository.delete(vv);
+        notificationService.createNotificationForAll("VU_VIEC", "Xóa vụ việc", "Vụ việc '" + vv.getVV_ten() + "' đã bị gỡ bỏ khỏi hệ thống.");
     }
 
     private void mapDtoToEntity(CaseRequest dto, VuViec entity) {

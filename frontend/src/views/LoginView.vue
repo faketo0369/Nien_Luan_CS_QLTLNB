@@ -2,7 +2,6 @@
   <div class="login-wrapper">
     <div class="login-card">
       <div class="login-header">
-        <span class="login-logo">⚖️</span>
         <h2>HỆ THỐNG QUẢN LÝ</h2>
         <p>Tài liệu nội bộ & Văn bản pháp lý</p>
       </div>
@@ -37,7 +36,7 @@
 
       <!-- Khối Đăng nhập nhanh phục vụ test prototype -->
       <div class="quick-login-panel">
-        <p class="quick-login-title">⚡ Đăng nhập nhanh (Test):</p>
+        <p class="quick-login-title">Đăng nhập nhanh (Test):</p>
         <div class="quick-login-buttons">
           <button class="quick-btn admin-color" @click="fillAndSubmit('admin', 'admin')">Admin</button>
           <button class="quick-btn manager-color" @click="fillAndSubmit('truongphong.dansu', 'truongphong.dansu')">Trưởng phòng</button>

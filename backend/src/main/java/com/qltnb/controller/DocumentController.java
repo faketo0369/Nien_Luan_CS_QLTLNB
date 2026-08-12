@@ -71,6 +71,48 @@ public class DocumentController {
                 .body(fileData);
     }
 
+    @GetMapping("/{id}/preview")
+    public ResponseEntity<?> preview(@PathVariable Long id) {
+        try {
+            byte[] fileData = documentService.downloadFile(id);
+            if (fileData == null || fileData.length == 0) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error("Tài liệu này chưa có tệp tin vật lý đính kèm."));
+            }
+            DocumentResponse doc = documentService.getDetail(id);
+            
+            String dinhDang = doc.getDinhDang() != null ? doc.getDinhDang().toLowerCase() : "";
+            String contentType;
+            if (dinhDang.equals("pdf")) {
+                contentType = "application/pdf";
+            } else if (dinhDang.equals("png")) {
+                contentType = "image/png";
+            } else if (dinhDang.equals("jpg") || dinhDang.equals("jpeg")) {
+                contentType = "image/jpeg";
+            } else if (dinhDang.equals("gif")) {
+                contentType = "image/gif";
+            } else if (dinhDang.equals("webp")) {
+                contentType = "image/webp";
+            } else if (dinhDang.equals("docx")) {
+                contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            } else if (dinhDang.equals("doc")) {
+                contentType = "application/msword";
+            } else {
+                contentType = "application/octet-stream";
+            }
+            
+            String cleanName = doc.getTen().replaceAll("[^a-zA-Z0-9]", "_") + "." + (doc.getDinhDang() != null ? doc.getDinhDang() : "bin");
+            
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + cleanName + "\"")
+                    .body(fileData);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Không thể tải tập tin xem trước: " + ex.getMessage()));
+        }
+    }
+
     @PostMapping("/{id}/submit")
     public ResponseEntity<ApiResponse<String>> submit(@PathVariable Long id) {
         documentService.submitForApproval(id);

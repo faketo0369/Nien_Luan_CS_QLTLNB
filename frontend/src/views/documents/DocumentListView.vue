@@ -5,8 +5,8 @@
         <h3 class="text-2xl font-bold text-gray-900">Kho Tài Liệu Nội Bộ</h3>
         <p class="text-sm text-gray-500 mt-1">Quản lý, phân quyền và lưu trữ văn bản pháp lý hành chính.</p>
       </div>
-      <button @click="openCreateModal" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition flex items-center gap-2 text-sm">
-        ➕ Tạo tài liệu mới
+      <button @click="openCreateModal" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition text-sm">
+        Tạo tài liệu mới
       </button>
     </div>
 
@@ -48,12 +48,12 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm">
       <ApiErrorMessage :error="error" />
       
       <LoadingSpinner v-if="loading" />
 
-      <div v-else class="overflow-x-auto">
+      <div v-else class="overflow-x-auto min-h-[350px] pb-12">
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-gray-50 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -77,10 +77,62 @@
               <td class="px-6 py-4 text-center">
                 <StatusBadge :status="doc.trangThai" />
               </td>
-              <td class="px-6 py-4 text-right space-x-2">
-                <button @click="viewDetail(doc.id)" class="text-xs font-bold text-gray-600 hover:text-blue-600 transition">Xem</button>
-                <button @click="downloadFile(doc)" class="text-xs font-bold text-slate-600 hover:text-emerald-600 transition">Tải về</button>
-                <button v-if="doc.trangThai === 'NHAP'" @click="triggerSubmitApproval(doc.id)" class="text-xs font-bold text-amber-600 hover:text-amber-700 transition">Gửi duyệt</button>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative">
+                <div class="relative inline-block text-left">
+                  <button
+                    @click.stop="toggleDropdown(doc.id)"
+                    class="px-2 py-1 hover:bg-gray-100 text-gray-600 rounded-lg transition-colors font-bold text-base leading-none"
+                  >
+                    ⋮
+                  </button>
+
+                  <div
+                    v-if="activeDropdownId === doc.id"
+                    @click.stop
+                    class="absolute right-0 w-44 bg-white border border-gray-200 rounded-lg shadow-xl z-50 py-1.5 text-left whitespace-nowrap"
+                    :class="isNearBottom(doc.id) ? 'bottom-full mb-1' : 'top-full mt-1'"
+                  >
+                    <button
+                      @click="openPreview(doc)"
+                      class="w-full text-left px-4 py-2 text-xs text-blue-600 hover:bg-blue-50 font-semibold transition-colors block"
+                    >
+                      Xem trước
+                    </button>
+
+                    <button
+                      @click="viewDetail(doc.id)"
+                      class="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-50 hover:text-blue-600 font-medium transition-colors block"
+                    >
+                      Chi tiết tài liệu
+                    </button>
+                    
+                    <button
+                      @click="downloadFile(doc)"
+                      class="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-green-50 hover:text-green-600 font-medium transition-colors block"
+                    >
+                      Tải tệp tin
+                    </button>
+
+                    <div v-if="isDraft(doc.trangThai)" class="border-t border-gray-100 my-1"></div>
+
+                    <button
+                      v-if="isDraft(doc.trangThai)"
+                      @click="triggerSubmitApproval(doc.id)"
+                      class="w-full text-left px-4 py-2 text-xs text-amber-600 hover:bg-amber-50 font-medium transition-colors block"
+                    >
+                      Gửi phê duyệt
+                    </button>
+
+                    <div class="border-t border-gray-100 my-1"></div>
+
+                    <button
+                      @click="confirmDelete(doc)"
+                      class="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 font-medium transition-colors block"
+                    >
+                      Xóa tài liệu
+                    </button>
+                  </div>
+                </div>
               </td>
             </tr>
             <tr v-if="documents.length === 0">
@@ -94,11 +146,20 @@
     </div>
 
     <DocumentModal v-model="modalState.show" :documentId="modalState.selectedId" @saved="fetchDocuments(0)" />
+
+    <DocumentPreviewModal
+      :show="showPreviewModal"
+      :document-id="previewDoc.id"
+      :document-title="previewDoc.title"
+      :file-extension="previewDoc.ext"
+      @close="showPreviewModal = false"
+      @download="downloadFile"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { documentApi } from '../../api/documents';
 import { adminApi } from '../../api/admin';
@@ -108,6 +169,7 @@ import Pagination from '../../components/common/Pagination.vue';
 import ApiErrorMessage from '../../components/common/ApiErrorMessage.vue';
 import LoadingSpinner from '../../components/common/LoadingSpinner.vue';
 import DocumentModal from '../../components/documents/DocumentModal.vue';
+import DocumentPreviewModal from '../../components/documents/DocumentPreviewModal.vue';
 
 const router = useRouter();
 const loading = ref(false);
@@ -120,6 +182,38 @@ const modalState = reactive({ show: false, selectedId: null });
 const selectOptions = reactive({ categories: [], docTypes: [], cases: [] });
 
 let searchTimeout = null;
+const activeDropdownId = ref(null);
+
+const toggleDropdown = (id) => {
+  activeDropdownId.value = activeDropdownId.value === id ? null : id;
+};
+
+const closeDropdownOnOutsideClick = () => {
+  activeDropdownId.value = null;
+};
+
+const isDraft = (status) => {
+  if (!status) return false;
+  const s = String(status).toUpperCase();
+  return s === 'NHAP' || s === 'DRAFT';
+};
+
+const isNearBottom = (id) => {
+  const idx = documents.value.findIndex(d => d.id === id);
+  return idx >= documents.value.length - 2;
+};
+
+const confirmDelete = async (doc) => {
+  if (confirm(`Bạn có chắc chắn muốn xóa tài liệu: "${doc.ten}"?`)) {
+    try {
+      await documentApi.delete(doc.id);
+      alert('Xóa tài liệu thành công!');
+      fetchDocuments(pageInfo.current);
+    } catch (err) {
+      alert('Lỗi khi xóa tài liệu: ' + (err.response?.data?.message || err.message));
+    }
+  }
+};
 
 const fetchDropdowns = async () => {
   try {
@@ -181,13 +275,32 @@ const triggerSubmitApproval = async (id) => {
   }
 };
 
+const showPreviewModal = ref(false);
+const previewDoc = ref({ id: null, title: '', ext: '' });
+
+const openPreview = (doc) => {
+  activeDropdownId.value = null;
+  const ext = doc.dinhDang || (doc.ten ? doc.ten.split('.').pop() : 'docx');
+  previewDoc.value = {
+    id: doc.id,
+    title: doc.ten,
+    ext: ext
+  };
+  showPreviewModal.value = true;
+};
+
 const downloadFile = async (doc) => {
+  activeDropdownId.value = null;
+  const docId = typeof doc === 'object' ? doc.id : doc;
+  const targetDoc = documents.value.find(d => d.id === docId) || (typeof doc === 'object' ? doc : {});
+  const docTen = targetDoc.ten || previewDoc.value.title || 'tai-lieu';
+  const docExt = targetDoc.dinhDang || previewDoc.value.ext || 'docx';
   try {
-    const res = await documentApi.download(doc.id);
+    const res = await documentApi.download(docId);
     const blob = new Blob([res.data]);
     const link = document.createElement('a');
     link.href = window.URL.createObjectURL(blob);
-    link.download = doc.ten + '.' + (doc.dinhDang || 'docx');
+    link.download = docTen + '.' + docExt;
     link.click();
   } catch (err) {
     alert('Tải tệp tin thất bại hoặc bạn không có quyền tải văn bản này.');
@@ -205,6 +318,11 @@ const formatDate = (dateStr) => dateStr ? dateStr.substring(0, 10) : '---';
 onMounted(() => {
   fetchDropdowns();
   fetchDocuments();
+  window.addEventListener('click', closeDropdownOnOutsideClick);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('click', closeDropdownOnOutsideClick);
 });
 </script>
 

@@ -61,20 +61,4 @@ public class LookupController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success(list));
     }
-
-    @GetMapping("/users")
-    public ResponseEntity<ApiResponse<List<LoginResponse>>> getUsers() {
-        List<LoginResponse> list = nguoiDungRepository.findAll().stream()
-                .map(u -> new LoginResponse(
-                        null, // Token is not needed for lookup
-                        u.getId(),
-                        u.getHoTen(),
-                        u.getTaiKhoan(),
-                        u.getND_email(),
-                        u.getVaiTro() != null ? u.getVaiTro().getVT_ten() : null,
-                        u.getBoPhan() != null ? u.getBoPhan().getBP_ten() : null
-                ))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(ApiResponse.success(list));
-    }
 }

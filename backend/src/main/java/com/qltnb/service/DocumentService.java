@@ -27,6 +27,7 @@ public class DocumentService {
     private final FileStorageService fileStorageService;
     private final LichSuHoatDongRepository repoLog;
     private final VersionService versionService;
+    private final NotificationService notificationService;
 
     @Transactional
     public DocumentResponse createDocument(DocumentRequest request, MultipartFile file) {
@@ -46,6 +47,7 @@ public class DocumentService {
 
         TaiLieu savedDoc = taiLieuRepository.save(doc);
         writeLog("tao_moi", savedDoc.getTL_id(), "Tạo mới tài liệu: " + savedDoc.getTL_ten());
+        notificationService.createNotificationForAll("TAI_LIEU", "Tài liệu mới", "Tài liệu '" + savedDoc.getTL_ten() + "' đã được tải lên hệ thống.");
         return mapEntityToDto(savedDoc);
     }
 
@@ -56,6 +58,7 @@ public class DocumentService {
         mapDtoToEntity(request, doc);
         TaiLieu updatedDoc = taiLieuRepository.save(doc);
         writeLog("cap_nhat", updatedDoc.getTL_id(), "Cập nhật thông tin tài liệu");
+        notificationService.createNotificationForAll("TAI_LIEU", "Cập nhật tài liệu", "Tài liệu '" + updatedDoc.getTL_ten() + "' đã được cập nhật thông tin.");
         return mapEntityToDto(updatedDoc);
     }
 
@@ -72,6 +75,7 @@ public class DocumentService {
         taiLieuRepository.save(doc);
         
         writeLog("xoa", id.intValue(), "Xóa mềm tài liệu khỏi hệ thống");
+        notificationService.createNotificationForAll("TAI_LIEU", "Xóa tài liệu", "Tài liệu '" + doc.getTL_ten() + "' đã bị gỡ bỏ khỏi hệ thống.");
     }
 
     public DocumentResponse getDetail(Long id) {

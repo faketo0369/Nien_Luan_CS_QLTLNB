@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class NotificationService {
 
     private final ThongBaoRepository thongBaoRepository;
+    private final com.qltnb.repository.NguoiDungRepository nguoiDungRepository;
 
     @Transactional
     public void createNotification(Long nguoiNhanId, String loai, String tieuDe, String noiDung) {
@@ -33,6 +34,21 @@ public class NotificationService {
         tb.setNgayTao(LocalDateTime.now());
         tb.setDaDoc(false);
         thongBaoRepository.save(tb);
+    }
+
+    @Transactional
+    public void createNotificationForAll(String loai, String tieuDe, String noiDung) {
+        List<NguoiDung> allUsers = nguoiDungRepository.findAll();
+        for (NguoiDung user : allUsers) {
+            ThongBao tb = new ThongBao();
+            tb.setNguoiNhan(user);
+            tb.setLoai(loai.toUpperCase());
+            tb.setTieuDe(tieuDe);
+            tb.setNoiDung(noiDung);
+            tb.setNgayTao(LocalDateTime.now());
+            tb.setDaDoc(false);
+            thongBaoRepository.save(tb);
+        }
     }
 
     public List<NotificationResponse> getMyNotifications(Long userId) {

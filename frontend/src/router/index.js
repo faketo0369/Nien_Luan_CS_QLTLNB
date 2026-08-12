@@ -33,73 +33,56 @@ const router = createRouter({
         {
           path: 'cases',
           name: 'cases',
-          component: () => import('../views/DashboardView.vue')
+          component: () => import('../views/cases/CaseListView.vue')
         },
         {
           path: 'cases/:id',
           name: 'case-detail',
-          component: () => import('../views/DashboardView.vue')
+          component: () => import('../views/cases/CaseDetailView.vue')
         },
         {
           path: 'clients',
           name: 'clients',
-          component: () => import('../views/DashboardView.vue')
+          component: () => import('../views/clients/ClientListView.vue')
         },
         {
           path: 'clients/:id',
           name: 'client-detail',
-          component: () => import('../views/DashboardView.vue')
+          component: () => import('../views/clients/ClientDetailView.vue')
         },
         {
           path: 'approval',
           name: 'approval',
-          component: () => import('../views/DashboardView.vue'),
+          component: () => import('../views/ApprovalView.vue'),
           meta: { allowedRoles: ['TRUONG_PHONG', 'ADMIN'] }
-        },
-        {
-          path: 'search',
-          name: 'search',
-          component: () => import('../views/DashboardView.vue')
         },
         {
           path: 'notifications',
           name: 'notifications',
-          component: () => import('../views/DashboardView.vue')
+          component: () => import('../views/NotificationView.vue')
         },
         {
           path: 'activity-logs',
           name: 'activity-logs',
-          component: () => import('../views/DashboardView.vue'),
+          component: () => import('../views/ActivityLogView.vue'),
           meta: { allowedRoles: ['TRUONG_PHONG', 'ADMIN'] }
         },
         {
           path: 'profile',
           name: 'profile',
-          component: () => import('../views/DashboardView.vue')
+          component: () => import('../views/ProfileView.vue')
         },
         // Admin Module Routes
         {
           path: 'admin/users',
           name: 'admin-users',
-          component: () => import('../views/DashboardView.vue'),
+          component: () => import('../views/admin/UserListView.vue'),
           meta: { allowedRoles: ['ADMIN'] }
         },
         {
           path: 'admin/departments',
           name: 'admin-departments',
-          component: () => import('../views/DashboardView.vue'),
-          meta: { allowedRoles: ['ADMIN'] }
-        },
-        {
-          path: 'admin/categories',
-          name: 'admin-categories',
-          component: () => import('../views/DashboardView.vue'),
-          meta: { allowedRoles: ['ADMIN'] }
-        },
-        {
-          path: 'admin/doc-types',
-          name: 'admin-doc-types',
-          component: () => import('../views/DashboardView.vue'),
+          component: () => import('../views/admin/DepartmentListView.vue'),
           meta: { allowedRoles: ['ADMIN'] }
         }
       ]

@@ -3,38 +3,34 @@
     <aside class="sidebar">
       <div class="sidebar-content">
         <div class="sidebar-header">
-          <span class="sidebar-logo">⚖️</span>
-          <h1 class="sidebar-title">Luật Dân Sự</h1>
+          <h1 class="sidebar-title">VeenY</h1>
         </div>
 
         <nav class="sidebar-nav">
           <p class="nav-section-title">Nghiệp vụ chung</p>
           
-          <router-link to="/" class="nav-item">📊 Dashboard</router-link>
-          <router-link to="/documents" class="nav-item">📄 Tài liệu</router-link>
-          <router-link to="/cases" class="nav-item">💼 Vụ việc</router-link>
-          <router-link to="/clients" class="nav-item">👥 Khách hàng</router-link>
-          <router-link to="/search" class="nav-item">🔍 Tìm kiếm</router-link>
+          <router-link to="/" class="nav-item">Dashboard</router-link>
+          <router-link to="/documents" class="nav-item">Tài liệu</router-link>
+          <router-link to="/cases" class="nav-item">Vụ việc</router-link>
+          <router-link to="/clients" class="nav-item">Khách hàng</router-link>
           
           <router-link to="/notifications" class="nav-item nav-item-badge">
-            <span>🔔 Thông báo</span>
-            <span v-if="unreadCount > 0" class="badge-count">
-              {{ unreadCount }}
+            <span>Thông báo</span>
+            <span v-if="notificationStore.unreadCount > 0" class="badge-count">
+              {{ notificationStore.unreadCount }}
             </span>
           </router-link>
 
           <div v-if="['TRUONG_PHONG', 'ADMIN'].includes(authStore.user?.vaiTro)" class="nav-section">
             <p class="nav-section-title">Kiểm soát</p>
-            <router-link to="/approval" class="nav-item">📝 Duyệt tài liệu</router-link>
-            <router-link to="/activity-logs" class="nav-item">🕵️‍♂️ Lịch sử hoạt động</router-link>
+            <router-link to="/approval" class="nav-item">Duyệt tài liệu</router-link>
+            <router-link to="/activity-logs" class="nav-item">Lịch sử hoạt động</router-link>
           </div>
 
-          <div v-if="authStore.user?.vaiTro === 'ADMIN'" class="nav-section">
+          <div v-if="['ADMIN', 'TRUONG_PHONG'].includes(authStore.user?.vaiTro)" class="nav-section">
             <p class="nav-section-title">Hệ thống</p>
-            <router-link to="/admin/users" class="nav-item">👤 Người dùng</router-link>
-            <router-link to="/admin/departments" class="nav-item">🏢 Bộ phận</router-link>
-            <router-link to="/admin/categories" class="nav-item">📁 Danh mục</router-link>
-            <router-link to="/admin/doc-types" class="nav-item">🏷️ Loại tài liệu</router-link>
+            <router-link to="/admin/users" class="nav-item">Người dùng</router-link>
+            <router-link v-if="authStore.user?.vaiTro === 'ADMIN'" to="/admin/departments" class="nav-item">Bộ phận</router-link>
           </div>
         </nav>
       </div>
@@ -51,10 +47,10 @@
         </div>
         <div class="footer-actions">
           <button @click="router.push('/profile')" class="footer-btn profile-btn">
-            ⚙️ Hồ sơ
+            Hồ sơ
           </button>
           <button @click="handleLogout" class="footer-btn logout-btn">
-            🚪 Đăng xuất
+            Đăng xuất
           </button>
         </div>
       </div>
@@ -73,14 +69,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useRouter } from 'vue-router';
-import { notificationApi } from '../api/notifications';
+import { useNotificationStore } from '../stores/notifications';
 
 const authStore = useAuthStore();
 const router = useRouter();
-const unreadCount = ref(0);
+const notificationStore = useNotificationStore();
 let intervalId = null;
 
 const userAvatarLetter = computed(() => {
@@ -91,26 +87,17 @@ const currentDate = computed(() => {
   return new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 });
 
-const fetchUnreadCount = async () => {
-  try {
-    const res = await notificationApi.getUnreadCount();
-    if (res.data?.success) {
-      unreadCount.value = res.data.data;
-    }
-  } catch (error) {
-    console.error('Lỗi lấy số thông báo chưa đọc:', error);
-  }
-};
-
 const handleLogout = () => {
   authStore.logout();
   router.push('/login');
 };
 
 onMounted(() => {
-  fetchUnreadCount();
+  notificationStore.fetchUnreadCount();
   // Thiết lập cơ chế Polling tự động chạy mỗi 30 giây
-  intervalId = setInterval(fetchUnreadCount, 30000);
+  intervalId = setInterval(() => {
+    notificationStore.fetchUnreadCount();
+  }, 30000);
 });
 
 onUnmounted(() => {
@@ -136,6 +123,8 @@ onUnmounted(() => {
   justify-content: space-between;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
+  position: relative;
+  z-index: 20;
 }
 
 .sidebar-content {
@@ -325,6 +314,8 @@ onUnmounted(() => {
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
+  position: relative;
+  z-index: 10;
 }
 
 .main-header {
@@ -357,5 +348,35 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 2rem;
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar-content::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-content::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 2px;
+}
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Custom scrollbar for main content */
+.main-content::-webkit-scrollbar {
+  width: 6px;
+}
+.main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+.main-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 </style>
