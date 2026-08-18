@@ -34,15 +34,10 @@
         </button>
       </form>
 
-      <!-- Khối Đăng nhập nhanh phục vụ test prototype -->
-      <div class="quick-login-panel">
-        <p class="quick-login-title">Đăng nhập nhanh (Test):</p>
-        <div class="quick-login-buttons">
-          <button class="quick-btn admin-color" @click="fillAndSubmit('admin', 'admin')">Admin</button>
-          <button class="quick-btn manager-color" @click="fillAndSubmit('truongphong.dansu', 'truongphong.dansu')">Trưởng phòng</button>
-          <button class="quick-btn staff-color" @click="fillAndSubmit('nhanvien.dansu', 'nhanvien.dansu')">Nhân viên</button>
-        </div>
-      </div>
+
+    </div>
+    <div class="login-footer">
+      <p>© 2026 Bản quyền thuộc về B2308384</p>
     </div>
   </div>
 </template>
@@ -78,22 +73,18 @@ const handleLogin = async () => {
     loading.value = false;
   }
 };
-
-const fillAndSubmit = (user, pass) => {
-  username.value = user;
-  password.value = pass;
-  handleLogin();
-};
 </script>
 
 <style scoped>
 .login-wrapper {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #0f172a, #1e1b4b);
   padding: 20px;
+  gap: 20px;
 }
 
 .login-card {
@@ -200,55 +191,12 @@ const fillAndSubmit = (user, pass) => {
   cursor: not-allowed;
 }
 
-.quick-login-panel {
-  margin-top: 25px;
-  border-top: 1px dashed #d1d5db;
-  padding-top: 15px;
+
+
+.login-footer {
+  color: #94a3b8;
+  font-size: 0.875rem;
   text-align: center;
-}
-
-.quick-login-title {
-  margin: 0 0 10px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.quick-login-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.quick-btn {
-  flex: 1;
-  padding: 8px 4px;
-  font-size: 12px;
-  font-weight: 700;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  color: white;
-  transition: opacity 0.2s ease, transform 0.1s ease;
-}
-
-.quick-btn:hover {
-  opacity: 0.9;
-}
-
-.quick-btn:active {
-  transform: scale(0.95);
-}
-
-.admin-color {
-  background-color: #dc2626;
-}
-
-.manager-color {
-  background-color: #d97706;
-}
-
-.staff-color {
-  background-color: #059669;
+  font-weight: 500;
 }
 </style>

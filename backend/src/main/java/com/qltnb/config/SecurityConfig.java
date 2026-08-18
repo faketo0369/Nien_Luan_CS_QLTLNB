@@ -58,8 +58,9 @@ public class SecurityConfig {
 
                 // 5. Quản trị danh mục nền hệ thống - Phân quyền quản lý tài liệu và người dùng
                 .requestMatchers("/api/users", "/api/users/**").hasAnyAuthority("ADMIN", "TRUONG_PHONG")
-                .requestMatchers("/api/departments/**").hasAuthority("ADMIN")
-                .requestMatchers("/api/categories/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/departments/**", "/api/categories/**", "/api/doc-types/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/departments/**", "/api/categories/**", "/api/doc-types/**").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/departments/**", "/api/categories/**", "/api/doc-types/**").hasAuthority("ADMIN")
 
                 // Tất cả các request phát sinh còn lại đều bắt buộc phải đăng nhập
                 .anyRequest().authenticated()

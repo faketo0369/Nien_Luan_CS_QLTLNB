@@ -77,7 +77,7 @@ const router = createRouter({
           path: 'admin/users',
           name: 'admin-users',
           component: () => import('../views/admin/UserListView.vue'),
-          meta: { allowedRoles: ['ADMIN'] }
+          meta: { allowedRoles: ['ADMIN', 'TRUONG_PHONG'] }
         },
         {
           path: 'admin/departments',

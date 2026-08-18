@@ -216,18 +216,17 @@ const confirmDelete = async (doc) => {
 };
 
 const fetchDropdowns = async () => {
-  try {
-    const [catRes, typeRes, caseRes] = await Promise.all([
-      adminApi.categories.getAll(),
-      adminApi.docTypes.getAll(),
-      caseApi.getAll({ size: 100 })
-    ]);
-    selectOptions.categories = catRes.data?.data || [];
-    selectOptions.docTypes = typeRes.data?.data || [];
-    selectOptions.cases = caseRes.data?.data || [];
-  } catch (err) {
-    console.error('Lỗi nạp danh mục nền:', err);
-  }
+  adminApi.categories.getAll()
+    .then(res => { selectOptions.categories = res.data?.data || []; })
+    .catch(err => { console.error('Lỗi tải danh mục:', err); });
+
+  adminApi.docTypes.getAll()
+    .then(res => { selectOptions.docTypes = res.data?.data || []; })
+    .catch(err => { console.error('Lỗi tải loại văn bản:', err); });
+
+  caseApi.getAll({ size: 100 })
+    .then(res => { selectOptions.cases = res.data?.data || []; })
+    .catch(err => { console.error('Lỗi tải vụ việc:', err); });
 };
 
 const fetchDocuments = async (page = 0) => {

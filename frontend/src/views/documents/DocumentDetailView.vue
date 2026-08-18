@@ -7,26 +7,26 @@
     <div v-if="loading"><LoadingSpinner /></div>
     <ApiErrorMessage :error="error" />
 
-    <div v-if="document" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+    <div v-if="docDetail" class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
       <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-5 lg:col-span-1">
         <div class="flex items-start justify-between border-b border-gray-100 pb-4">
           <div>
-            <h4 class="text-lg font-bold text-gray-900">{{ document.ten }}</h4>
-            <p class="text-xs font-mono font-bold text-gray-400 mt-1 uppercase">Số hiệu: {{ document.soHieu || '---' }}</p>
+            <h4 class="text-lg font-bold text-gray-900">{{ docDetail.ten }}</h4>
+            <p class="text-xs font-mono font-bold text-gray-400 mt-1 uppercase">Số hiệu: {{ docDetail.soHieu || '---' }}</p>
           </div>
-          <StatusBadge :status="document.trangThai" />
+          <StatusBadge :status="docDetail.trangThai" />
         </div>
 
         <div class="space-y-3 text-sm">
-          <div class="flex justify-between"><span class="text-gray-400">Định dạng file:</span> <span class="font-mono font-bold uppercase text-blue-600">{{ document.dinhDang }}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Dung lượng:</span> <span class="font-medium text-gray-800">{{ formatSize(document.dungLuong) }}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Mức bảo mật:</span> <span :class="document.baoMat ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'">{{ document.baoMat ? 'Mật / Nội bộ' : 'Công khai' }}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Danh mục nền:</span> <span class="font-semibold text-gray-700">{{ document.danhMuc?.ten }}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Loại văn bản:</span> <span class="font-semibold text-gray-700">{{ document.loaiTaiLieu?.ten }}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Hồ sơ vụ việc:</span> <span class="font-semibold text-blue-600 truncate max-w-[150px]">{{ document.vuViec?.ten || 'Không đính kèm' }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Định dạng file:</span> <span class="font-mono font-bold uppercase text-blue-600">{{ docDetail.dinhDang }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Dung lượng:</span> <span class="font-medium text-gray-800">{{ formatSize(docDetail.dungLuong) }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Mức bảo mật:</span> <span :class="docDetail.baoMat ? 'text-red-600 font-bold' : 'text-emerald-600 font-bold'">{{ docDetail.baoMat ? 'Mật / Nội bộ' : 'Công khai' }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Danh mục nền:</span> <span class="font-semibold text-gray-700">{{ docDetail.danhMuc?.ten }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Loại văn bản:</span> <span class="font-semibold text-gray-700">{{ docDetail.loaiTaiLieu?.ten }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Hồ sơ vụ việc:</span> <span class="font-semibold text-blue-600 truncate max-w-[150px]">{{ docDetail.vuViec?.ten || 'Không đính kèm' }}</span></div>
           <div class="pt-2 border-t border-gray-50 text-xs text-gray-400 space-y-1">
-            <p>Ngày khởi tạo: {{ document.ngayTao }}</p>
-            <p>Cập nhật cuối: {{ document.ngayCapNhat || '---' }}</p>
+            <p>Ngày khởi tạo: {{ docDetail.ngayTao }}</p>
+            <p>Cập nhật cuối: {{ docDetail.ngayCapNhat || '---' }}</p>
           </div>
         </div>
 
@@ -34,7 +34,7 @@
           <button @click="downloadCurrent" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition shadow-sm border-0 cursor-pointer">
             📥 Tải tệp bản mới nhất
           </button>
-          <button v-if="document.trangThai === 'NHAP'" @click="submitApproval" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition shadow-sm border-0 cursor-pointer">
+          <button v-if="docDetail.trangThai === 'NHAP'" @click="submitApproval" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl transition shadow-sm border-0 cursor-pointer">
             🚀 Trình Hội đồng phê duyệt
           </button>
         </div>
@@ -63,10 +63,10 @@
             <div class="divide-y divide-gray-100">
               <div v-for="ver in versions" :key="ver.id" class="py-3.5 flex items-center justify-between text-sm">
                 <div class="flex items-center gap-3">
-                  <span class="px-2 py-0.5 font-mono font-bold bg-blue-50 text-blue-600 text-xs rounded border border-blue-200">V{{ ver.phienBan }}</span>
+                  <span class="px-2 py-0.5 font-mono font-bold bg-blue-50 text-blue-600 text-xs rounded border border-blue-200">{{ ver.soPhienBan ? ver.soPhienBan.toUpperCase() : '---' }}</span>
                   <div>
-                    <p class="font-semibold text-gray-800">{{ ver.tenFileGoc }}</p>
-                    <p class="text-xs text-gray-400 mt-0.5">Dung lượng: {{ formatSize(ver.dungLuong) }} | Cập nhật lúc: {{ ver.ngayTao }}</p>
+                    <p class="font-semibold text-gray-800">{{ ver.tenFileGoc || 'Tập tin liên kết' }}</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Dung lượng: {{ formatSize(ver.kichCo) }} | Cập nhật lúc: {{ ver.timeUpdate ? ver.timeUpdate.replace('T', ' ') : '---' }}</p>
                   </div>
                 </div>
                 <button @click="downloadVersion(ver)" class="px-3 py-1 text-xs font-bold text-emerald-600 hover:bg-emerald-50 rounded border border-emerald-200 transition cursor-pointer">Tải bản này</button>
@@ -115,7 +115,7 @@ const documentId = route.params.id;
 
 const loading = ref(false);
 const error = ref(null);
-const document = ref(null);
+const docDetail = ref(null);
 const versions = ref([]);
 const approvalHistory = ref([]);
 const activeTab = ref('versions');
@@ -129,7 +129,7 @@ const fetchDetailData = async () => {
       versionApi.getByDocumentId(documentId),
       documentApi.getApprovalHistory(documentId)
     ]);
-    if (docRes.data?.success) document.value = docRes.data.data;
+    if (docRes.data?.success) docDetail.value = docRes.data.data;
     versions.value = verRes.data?.data || [];
     approvalHistory.value = hisRes.data?.data || [];
   } catch (err) {
@@ -158,10 +158,10 @@ const uploadNewVersion = async (event) => {
 
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('ten', document.value.ten);
-  formData.append('danhMucId', document.value.danhMuc?.id || '');
-  formData.append('loaiTaiLieuId', document.value.loaiTaiLieu?.id || '');
-  formData.append('boPhanId', document.value.boPhan?.id || '');
+  formData.append('ten', docDetail.value.ten);
+  formData.append('danhMucId', docDetail.value.danhMuc?.id || '');
+  formData.append('loaiTaiLieuId', docDetail.value.loaiTaiLieu?.id || '');
+  formData.append('boPhanId', docDetail.value.boPhan?.id || '');
 
   try {
     loading.value = true;
@@ -179,19 +179,25 @@ const uploadNewVersion = async (event) => {
 
 const downloadCurrent = async () => {
   try {
+    console.log("downloadCurrent starting for ID:", documentId);
     const res = await documentApi.download(documentId);
-    triggerDownload(res.data, document.value.ten + '.' + document.value.dinhDang);
+    console.log("downloadCurrent response received:", res);
+    triggerDownload(res.data, docDetail.value.ten + '.' + docDetail.value.dinhDang);
   } catch (err) {
-    alert('Không thể tải tệp tin vật lý.');
+    console.error("downloadCurrent failed:", err);
+    alert('Không thể tải tệp tin vật lý. Chi tiết: ' + (err.response?.data?.message || err.message || err));
   }
 };
 
 const downloadVersion = async (ver) => {
   try {
+    console.log("downloadVersion starting for ver:", ver);
     const res = await versionApi.downloadVersion(documentId, ver.id);
-    triggerDownload(res.data, ver.tenFileGoc);
+    console.log("downloadVersion response received:", res);
+    triggerDownload(res.data, ver.tenFileGoc || `phien_ban_${ver.soPhienBan}.${ver.dinhDang}`);
   } catch (err) {
-    alert('Tải phiên bản cũ thất bại.');
+    console.error("downloadVersion failed:", err);
+    alert('Tải phiên bản cũ thất bại. Chi tiết: ' + (err.response?.data?.message || err.message || err));
   }
 };
 

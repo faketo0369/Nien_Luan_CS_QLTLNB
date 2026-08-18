@@ -106,7 +106,7 @@
 
         <div>
           <label class="block text-xs font-semibold mb-1 text-gray-600">Bộ phận</label>
-          <select v-model="form.boPhanId" class="w-full border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          <select v-model="form.boPhanId" :disabled="authStore.user?.vaiTro === 'TRUONG_PHONG'" class="w-full border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white disabled:bg-gray-100 disabled:text-gray-500">
             <option :value="null">-- Chọn bộ phận --</option>
             <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.ten }}</option>
           </select>
@@ -114,7 +114,7 @@
 
         <div>
           <label class="block text-xs font-semibold mb-1 text-gray-600">Vai trò</label>
-          <select v-model="form.role" class="w-full border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+          <select v-model="form.role" :disabled="authStore.user?.vaiTro === 'TRUONG_PHONG'" class="w-full border p-2 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white disabled:bg-gray-100 disabled:text-gray-500">
             <option value="ADMIN">ADMIN</option>
             <option value="TRUONG_PHONG">TRUONG_PHONG</option>
             <option value="NHAN_VIEN">NHAN_VIEN</option>
@@ -141,11 +141,12 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue';
 import { adminApi } from '../../api/admin';
+import { useAuthStore } from '../../stores/auth';
 
+const authStore = useAuthStore();
 const items = ref([]);
 const loading = ref(false);
 const errorMsg = ref('');
@@ -195,12 +196,19 @@ const fetchDepartments = async () => {
 const openCreateModal = () => {
   isEditMode.value = false;
   selectedUserId.value = null;
+  
+  let deptId = null;
+  if (authStore.user?.vaiTro === 'TRUONG_PHONG') {
+    const matchedDept = departments.value.find(d => d.ten === authStore.user.boPhan);
+    deptId = matchedDept ? matchedDept.id : null;
+  }
+  
   form.value = {
     hoTen: '',
     taiKhoan: '',
     matKhau: '',
     email: '',
-    boPhanId: null,
+    boPhanId: deptId,
     role: 'NHAN_VIEN',
     chuyenMon: '',
     soChungChi: ''
@@ -218,8 +226,8 @@ const openEditModal = (user) => {
     taiKhoan: user.taiKhoan || '',
     matKhau: '',
     email: user.email || '',
-    boPhanId: matchedDept ? matchedDept.id : null,
-    role: user.vaiTro || 'NHAN_VIEN',
+    boPhanId: authStore.user?.vaiTro === 'TRUONG_PHONG' ? (departments.value.find(d => d.ten === authStore.user.boPhan)?.id || null) : (matchedDept ? matchedDept.id : null),
+    role: authStore.user?.vaiTro === 'TRUONG_PHONG' ? 'NHAN_VIEN' : (user.vaiTro || 'NHAN_VIEN'),
     chuyenMon: user.chuyenMon || '',
     soChungChi: user.soChungChi || ''
   };

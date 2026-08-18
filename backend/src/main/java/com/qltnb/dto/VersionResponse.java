@@ -15,6 +15,8 @@ public class VersionResponse {
     private Long kichCo;
     private String dinhDang;
 
+    private String tenFileGoc;
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor

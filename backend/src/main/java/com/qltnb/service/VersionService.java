@@ -122,6 +122,18 @@ public class VersionService {
         res.setGhiChu(pb.getPBTL_ghiChu());
         res.setKichCo(pb.getPBTL_kichCo());
         res.setDinhDang(pb.getPBTL_dinhDang());
+
+        // Trích xuất tên file gốc từ đường dẫn lưu trữ (bỏ prefix phiên bản)
+        String duongDan = pb.getPBTL_duongDan();
+        if (duongDan != null && !duongDan.isBlank()) {
+            String fileName = duongDan.contains("/") ? duongDan.substring(duongDan.lastIndexOf("/") + 1) : duongDan;
+            // Bỏ prefix "v1_", "v2_" ... để lấy tên gốc
+            if (fileName.matches("^v\\d+_.*")) {
+                fileName = fileName.substring(fileName.indexOf("_") + 1);
+            }
+            res.setTenFileGoc(fileName);
+        }
+
         return res;
     }
 

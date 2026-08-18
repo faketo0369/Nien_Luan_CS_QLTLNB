@@ -24,23 +24,54 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
 
-    public List<UserResponse> getAllUsers() {
-        return nguoiDungRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+    public List<UserResponse> getAllUsers(NguoiDung currentUser) {
+        String role = currentUser.getVaiTro() != null ? currentUser.getVaiTro().getVT_ten() : "NHAN_VIEN";
+        if ("ADMIN".equals(role)) {
+            return nguoiDungRepository.findAll().stream()
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        } else if ("TRUONG_PHONG".equals(role)) {
+            Integer bpId = currentUser.getBoPhan() != null ? currentUser.getBoPhan().getBP_id() : null;
+            if (bpId == null) {
+                return java.util.Collections.emptyList();
+            }
+            return nguoiDungRepository.findAll().stream()
+                    .filter(u -> u.getBoPhan() != null && u.getBoPhan().getBP_id().equals(bpId))
+                    .map(this::mapToResponse)
+                    .collect(Collectors.toList());
+        }
+        return java.util.Collections.emptyList();
     }
 
-    public UserResponse getUserDetail(Long id) {
+    public UserResponse getUserDetail(Long id, NguoiDung currentUser) {
         NguoiDung u = nguoiDungRepository.findById(id.intValue())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+        String role = currentUser.getVaiTro() != null ? currentUser.getVaiTro().getVT_ten() : "NHAN_VIEN";
+        if ("TRUONG_PHONG".equals(role)) {
+            Integer bpId = currentUser.getBoPhan() != null ? currentUser.getBoPhan().getBP_id() : null;
+            if (bpId == null || u.getBoPhan() == null || !u.getBoPhan().getBP_id().equals(bpId)) {
+                throw new RuntimeException("Bạn không có quyền truy cập tài khoản của bộ phận khác.");
+            }
+        }
         return mapToResponse(u);
     }
 
     @Transactional
-    public UserResponse createUser(UserRequest request) {
+    public UserResponse createUser(UserRequest request, NguoiDung currentUser) {
         if (nguoiDungRepository.findByTaiKhoan(request.getTaiKhoan()).isPresent()) {
             throw new RuntimeException("Tên tài khoản đã tồn tại.");
         }
+        
+        String role = currentUser.getVaiTro() != null ? currentUser.getVaiTro().getVT_ten() : "NHAN_VIEN";
+        if ("TRUONG_PHONG".equals(role)) {
+            Integer bpId = currentUser.getBoPhan() != null ? currentUser.getBoPhan().getBP_id() : null;
+            if (bpId == null) {
+                throw new RuntimeException("Tài khoản của bạn chưa được liên kết với bộ phận nào.");
+            }
+            request.setBoPhanId(bpId);
+            request.setVaiTro("NHAN_VIEN");
+        }
+
         NguoiDung u = new NguoiDung();
         u.setTaiKhoan(request.getTaiKhoan());
         u.setND_hoTen(request.getHoTen());
@@ -70,9 +101,19 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponse updateUser(Long id, UserRequest request) {
+    public UserResponse updateUser(Long id, UserRequest request, NguoiDung currentUser) {
         NguoiDung u = nguoiDungRepository.findById(id.intValue())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+
+        String role = currentUser.getVaiTro() != null ? currentUser.getVaiTro().getVT_ten() : "NHAN_VIEN";
+        if ("TRUONG_PHONG".equals(role)) {
+            Integer bpId = currentUser.getBoPhan() != null ? currentUser.getBoPhan().getBP_id() : null;
+            if (bpId == null || u.getBoPhan() == null || !u.getBoPhan().getBP_id().equals(bpId)) {
+                throw new RuntimeException("Bạn không có quyền chỉnh sửa thông tin tài khoản thuộc bộ phận khác.");
+            }
+            request.setBoPhanId(bpId);
+            request.setVaiTro("NHAN_VIEN");
+        }
 
         u.setND_hoTen(request.getHoTen());
         u.setND_email(request.getEmail());
@@ -99,9 +140,18 @@ public class UserService {
     }
 
     @Transactional
-    public void deleteUser(Long id) {
+    public void deleteUser(Long id, NguoiDung currentUser) {
         NguoiDung u = nguoiDungRepository.findById(id.intValue())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng."));
+        
+        String role = currentUser.getVaiTro() != null ? currentUser.getVaiTro().getVT_ten() : "NHAN_VIEN";
+        if ("TRUONG_PHONG".equals(role)) {
+            Integer bpId = currentUser.getBoPhan() != null ? currentUser.getBoPhan().getBP_id() : null;
+            if (bpId == null || u.getBoPhan() == null || !u.getBoPhan().getBP_id().equals(bpId)) {
+                throw new RuntimeException("Bạn không có quyền xóa tài khoản thuộc bộ phận khác.");
+            }
+        }
+
         nguoiDungRepository.delete(u);
         notificationService.createNotificationForAll("HE_THONG", "Xóa tài khoản", "Tài khoản của " + u.getHoTen() + " đã bị gỡ bỏ khỏi hệ thống.");
     }
